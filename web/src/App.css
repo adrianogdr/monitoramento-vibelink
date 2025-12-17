@@ -1,0 +1,144 @@
+/* Fundo escuro industrial */
+:root {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+h1 {
+  color: #646cff;
+  margin-bottom: 2rem;
+}
+
+/* Grid para organizar os cartões */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+/* O cartão da máquina */
+.card {
+  background-color: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  border-color: #646cff;
+}
+
+.card h3 {
+  margin-top: 0;
+  color: #e1e1e6;
+}
+
+strong {
+  color: #ff9f43; /* Cor de destaque para a temperatura */
+}
+
+/* Indicador visual (Bolinha) */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.status-indicator.on { background-color: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+.status-indicator.off { background-color: #e74c3c; }
+
+/* Botões */
+button {
+  width: 100%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.btn-start {
+  background-color: #2ecc71; /* Verde */
+}
+.btn-start:hover {
+  background-color: #27ae60;
+}
+
+.btn-stop {
+  background-color: #e74c3c; /* Vermelho */
+}
+.btn-stop:hover {
+  background-color: #c0392b;
+}
+
+/* Estilo do Formulário */
+.form-maquina {
+  background-color: #2a2a2a;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  border: 1px dashed #646cff;
+}
+
+.form-maquina input {
+  flex: 1;
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #3a3a3a;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.form-maquina button {
+  width: auto; /* O botão de adicionar não precisa ocupar a linha toda */
+  background-color: #646cff;
+}
+
+.form-maquina button:hover {
+  background-color: #535bf2;
+}
+
+/* Agrupar botões */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* O botão de Ligar/Desligar cresce para ocupar espaço */
+.actions .btn-start, .actions .btn-stop {
+  flex: 1;
+}
+
+/* O botão de Deletar é menorzinho */
+.btn-delete {
+  width: 50px;
+  background-color: #57606f;
+  font-size: 1.2rem;
+}
+
+.btn-delete:hover {
+  background-color: #ff4757; /* Fica vermelho vivo ao passar o mouse */
+}

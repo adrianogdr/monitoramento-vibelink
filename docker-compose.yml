@@ -1,14 +1,15 @@
 services:
-  n8n-estudos:
-    image: docker.n8n.io/n8nio/n8n
-    container_name: n8n-estudos
+  postgres:
+    image: postgres:16
+    container_name: banco-vibelink
     ports:
-      - "5679:5678"  # Porta externa 5679 para não conflitar com seu outro projeto
-    volumes:
-      - n8n_data_estudos:/home/node/.n8n
+      - "5432:5432"
     environment:
-      - N8N_SECURE_COOKIE=false
-    restart: unless-stopped
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=vibelink_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  n8n_data_estudos: # Volume exclusivo para estudos
+  postgres_data:
