@@ -1,0 +1,14 @@
+services:
+  n8n-estudos:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n-estudos
+    ports:
+      - "5679:5678"  # Porta externa 5679 para não conflitar com seu outro projeto
+    volumes:
+      - n8n_data_estudos:/home/node/.n8n
+    environment:
+      - N8N_SECURE_COOKIE=false
+    restart: unless-stopped
+
+volumes:
+  n8n_data_estudos: # Volume exclusivo para estudos
