@@ -76,10 +76,11 @@ server.delete('/maquinas/:id', async (request, reply) => {
 })
 
 // 4. Ligar o Servidor
-server.listen({ port: 3333 }, (err, address) => {
-  if (err) {
-    console.error(err)
-    process.exit(1)
-  }
-  console.log(`🔥 Servidor rodando em: ${address}`)
+// OUVINDO A PORTA
+// Importante para o Render: host '0.0.0.0'
+server.listen({ 
+  host: '0.0.0.0', 
+  port: process.env.PORT ? Number(process.env.PORT) : 3333 
+}).then(() => {
+  console.log('🔥 Servidor rodando...')
 })
