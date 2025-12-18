@@ -8,42 +8,74 @@ interface Maquina {
   ligada: boolean;
 }
 
+// Seu link da API na nuvem
+const API_URL = "https://vibelink-api.onrender.com"
+
 function App() {
   const [maquinas, setMaquinas] = useState<Maquina[]>([])
 
-  // NOVOS ESTADOS: Para guardar o que está sendo digitado
+  // Estados do formulário
   const [nome, setNome] = useState('')
   const [temp, setTemp] = useState('')
 
+  // NOVO: Estado para controlar o aviso de carregamento
+  // Começa como true porque ao abrir o site ele já começa buscando
+  const [carregando, setCarregando] = useState(true)
+
+  // Função de buscar dados
   async function carregarMaquinas() {
-    const response = await fetch('https://vibelink-api.onrender.com/maquinas')
-    const data = await response.json()
-    setMaquinas(data)
+    setCarregando(true) // Mostra o aviso
+    try {
+      const response = await fetch(`${API_URL}/maquinas`)
+      const data = await response.json()
+      setMaquinas(data)
+    } catch (error) {
+      console.error("Erro ao buscar:", error)
+    } finally {
+      setCarregando(false) // Esconde o aviso (dando certo ou errado)
+    }
   }
 
-  useEffect(() => { carregarMaquinas() }, [])
+  // Carrega ao iniciar
+  useEffect(() => {
+    carregarMaquinas()
+  }, [])
 
+  // Função Ligar/Desligar
   async function ligarDesligar(id: number) {
-    await fetch(`https://vibelink-api.onrender.com/maquinas/${id}/toggle`, { method: 'POST' })
+    await fetch(`${API_URL}/maquinas/${id}/toggle`, { method: 'POST' })
     carregarMaquinas()
   }
 
-  // NOVA FUNÇÃO: Envia a nova máquina para o servidor
+  // Função Deletar (MOVIDA PARA O LUGAR CERTO)
+  async function deletarMaquina(id: number) {
+    if (!confirm("Tem certeza que quer remover esta máquina?")) return
+
+    await fetch(`${API_URL}/maquinas/${id}`, {
+      method: 'DELETE'
+    })
+
+    carregarMaquinas()
+  }
+
+  // Função Criar Nova
   async function criarMaquina(event: React.FormEvent) {
-    event.preventDefault() // Impede a página de recarregar sozinha
+    event.preventDefault()
 
     if (!nome || !temp) return alert("Preencha todos os campos!")
 
-    await fetch('https://vibelink-api.onrender.com/maquinas', {
+    // Aviso visual enquanto salva
+    setCarregando(true)
+
+    await fetch(`${API_URL}/maquinas`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }, // Avisa que estamos mandando JSON
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nome: nome,
-        temperatura: parseFloat(temp) // Converte texto "50" para número 50
+        temperatura: parseFloat(temp)
       })
     })
 
-    // Limpa os campos e recarrega a lista
     setNome('')
     setTemp('')
     carregarMaquinas()
@@ -68,53 +100,48 @@ function App() {
         <button type="submit">➕ Adicionar</button>
       </form>
 
-      <div className="card-grid">
-        {maquinas.map(maquina => (
-          <div key={maquina.id} className="card">
-            <h3>{maquina.nome}</h3>
+      {/* LÓGICA DO LOADING: Se estiver carregando, mostra texto. Se não, mostra as máquinas */}
+      {carregando ? (
+        <div className="loading-area">
+          <p>🔄 <strong>Conectando ao servidor industrial...</strong></p>
+          <p><small>(Como usamos servidor gratuito, isso pode levar até 1 minuto na primeira vez)</small></p>
+        </div>
+      ) : (
+        <div className="card-grid">
+          {maquinas.length === 0 && <p>Nenhuma máquina cadastrada.</p>}
 
-            <div className="status-row">
-              <span className={`status-indicator ${maquina.ligada ? 'on' : 'off'}`}></span>
-              <span>{maquina.ligada ? 'OPERANDO' : 'PARADA'}</span>
+          {maquinas.map(maquina => (
+            <div key={maquina.id} className="card">
+              <h3>{maquina.nome}</h3>
+
+              <div className="status-row">
+                <span className={`status-indicator ${maquina.ligada ? 'on' : 'off'}`}></span>
+                <span>{maquina.ligada ? 'OPERANDO' : 'PARADA'}</span>
+              </div>
+
+              <p>Temp: <strong>{maquina.temperatura}°C</strong></p>
+
+              <div className="actions">
+                <button
+                  onClick={() => ligarDesligar(maquina.id)}
+                  className={maquina.ligada ? 'btn-stop' : 'btn-start'}
+                >
+                  {maquina.ligada ? '🛑' : '⚡'}
+                </button>
+
+                <button
+                  onClick={() => deletarMaquina(maquina.id)}
+                  className="btn-delete"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
-
-            <p>Temp: <strong>{maquina.temperatura}°C</strong></p>
-
-            {/* AQUI ESTÃO OS DOIS BOTÕES JUNTOS */}
-            <div className="actions">
-              <button
-                onClick={() => ligarDesligar(maquina.id)}
-                className={maquina.ligada ? 'btn-stop' : 'btn-start'}
-              >
-                {maquina.ligada ? '🛑' : '⚡'}
-              </button>
-
-              <button
-                onClick={() => deletarMaquina(maquina.id)}
-                className="btn-delete"
-              >
-                🗑️
-              </button>
-            </div>
-
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
-
-  // Função para deletar
-  async function deletarMaquina(id: number) {
-    // Pergunta de segurança (ninguém quer deletar sem querer)
-    if (!confirm("Tem certeza que quer remover esta máquina?")) return
-
-    await fetch(`https://vibelink-api.onrender.com/maquinas/${id}`, {
-      method: 'DELETE'
-    })
-
-    // Atualiza a tela
-    carregarMaquinas()
-  }
 }
 
 export default App
