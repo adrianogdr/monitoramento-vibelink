@@ -2,85 +2,106 @@ import { PrismaClient } from '@prisma/client'
 import fastify from 'fastify'
 import cors from '@fastify/cors'
 
-// 1. Criar as instâncias
 const prisma = new PrismaClient()
 const server = fastify()
 
-// 2. Configurar segurança (CORS)
-// Isso permite que o seu site React acesse este servidor
 server.register(cors, {
-  origin: '*', 
-  methods: ['GET', 'POST', 'PUT', 'DELETE'] // Adicionamos DELETE explicitamente aqui
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE']
 })
 
-// 3. Criar a Rota (O "Menu" do restaurante)
-// Quando alguém acessar /maquinas, devolvemos os dados do banco
+// === SISTEMA DE SEGURANÇA ANTISPAM ===
+// Variável para guardar quando foi a última ação feita no servidor
+let ultimaAcao = 0 
+const INTERVALO_MINIMO = 3000 // 3 segundos (em milissegundos)
+
+// Função para verificar se está "spamando"
+function verificarSpam() {
+  const agora = Date.now()
+  if (agora - ultimaAcao < INTERVALO_MINIMO) {
+    throw new Error("⏳ Calma lá! Espere 3 segundos entre as ações.")
+  }
+  ultimaAcao = agora
+}
+
+// 1. Rota de Leitura (Sempre liberada)
 server.get('/maquinas', async () => {
-  const lista = await prisma.maquina.findMany()
+  const lista = await prisma.maquina.findMany({
+    orderBy: { id: 'asc' } // Ordena para não ficar mudando de posição
+  })
   return lista
 })
 
-// Rota para Ligar/Desligar uma máquina específica
-server.post('/maquinas/:id/toggle', async (request, reply) => {
-  // 1. Pega o ID que veio na URL (ex: /maquinas/1/toggle)
-  const params = request.params as { id: string }
-  const id = Number(params.id)
-
-  // 2. Busca a máquina atual para saber se está ligada ou não
-  const maquinaAtual = await prisma.maquina.findUnique({
-    where: { id: id }
-  })
-
-  if (!maquinaAtual) {
-    return reply.status(404).send({ error: "Máquina não encontrada" })
-  }
-
-  // 3. Inverte o status (Se true vira false, se false vira true)
-  const maquinaAtualizada = await prisma.maquina.update({
-    where: { id: id },
-    data: { ligada: !maquinaAtual.ligada } // O símbolo "!" significa "o contrário de"
-  })
-
-  return maquinaAtualizada
-})
-
-// Rota para CRIAR uma nova máquina
+// 2. Criar Máquina (Com limite de 6)
 server.post('/maquinas', async (request, reply) => {
-  // 1. Recebe os dados que o Front-End mandou
-  const dados = request.body as { nome: string; temperatura: number }
-  
-  // 2. Salva no Banco
-  const novaMaquina = await prisma.maquina.create({
-    data: {
-      nome: dados.nome,
-      temperatura: dados.temperatura,
-      ligada: false // Toda máquina nova começa desligada por segurança
+  try {
+    verificarSpam() // 1ª Proteção: Velocidade
+
+    // 2ª Proteção: Quantidade Máxima
+    const totalMaquinas = await prisma.maquina.count()
+    if (totalMaquinas >= 6) {
+      return reply.status(403).send({ 
+        error: "🚫 Limite de demonstração atingido! Máximo de 6 máquinas permitidas neste portfólio." 
+      })
     }
-  })
 
-  // 3. Responde "Criado com sucesso" (Código 201)
-  return reply.status(201).send(novaMaquina)
+    const dados = request.body as { nome: string; temperatura: number }
+    
+    const novaMaquina = await prisma.maquina.create({
+      data: {
+        nome: dados.nome, // Aqui você poderia limitar o tamanho do texto também (ex: .substring(0, 20))
+        temperatura: dados.temperatura,
+        ligada: false
+      }
+    })
+    return reply.status(201).send(novaMaquina)
+
+  } catch (erro: any) {
+    return reply.status(429).send({ error: erro.message })
+  }
 })
 
-// Rota para DELETAR uma máquina
+// 3. Ligar/Desligar (Com proteção de velocidade)
+server.post('/maquinas/:id/toggle', async (request, reply) => {
+  try {
+    verificarSpam() // Proteção de velocidade
+
+    const params = request.params as { id: string }
+    const id = Number(params.id)
+
+    const maquinaAtual = await prisma.maquina.findUnique({ where: { id } })
+    if (!maquinaAtual) return reply.status(404).send({ error: "Máquina não encontrada" })
+
+    const atualizada = await prisma.maquina.update({
+      where: { id },
+      data: { ligada: !maquinaAtual.ligada }
+    })
+    return atualizada
+
+  } catch (erro: any) {
+    return reply.status(429).send({ error: erro.message })
+  }
+})
+
+// 4. Deletar (Com proteção de velocidade)
 server.delete('/maquinas/:id', async (request, reply) => {
-  const params = request.params as { id: string }
-  const id = Number(params.id)
+  try {
+    verificarSpam() // Proteção de velocidade
 
-  // O comando do Prisma é direto: delete onde o ID for igual
-  await prisma.maquina.delete({
-    where: { id: id }
-  })
+    const params = request.params as { id: string }
+    const id = Number(params.id)
 
-  return reply.status(204).send() // 204 = "Sucesso, sem conteúdo para devolver"
+    await prisma.maquina.delete({ where: { id } })
+    return reply.status(204).send()
+
+  } catch (erro: any) {
+    return reply.status(429).send({ error: erro.message })
+  }
 })
 
-// 4. Ligar o Servidor
-// OUVINDO A PORTA
-// Importante para o Render: host '0.0.0.0'
 server.listen({ 
   host: '0.0.0.0', 
   port: process.env.PORT ? Number(process.env.PORT) : 3333 
 }).then(() => {
-  console.log('🔥 Servidor rodando...')
+  console.log('🔥 Servidor Anti-Spam rodando...')
 })

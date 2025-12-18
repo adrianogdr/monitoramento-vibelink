@@ -59,15 +59,14 @@ function App() {
   }
 
   // Função Criar Nova
+  // Substitua a função criarMaquina por esta:
   async function criarMaquina(event: React.FormEvent) {
     event.preventDefault()
-
     if (!nome || !temp) return alert("Preencha todos os campos!")
 
-    // Aviso visual enquanto salva
     setCarregando(true)
 
-    await fetch(`${API_URL}/maquinas`, {
+    const response = await fetch(`${API_URL}/maquinas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -75,6 +74,14 @@ function App() {
         temperatura: parseFloat(temp)
       })
     })
+
+    // NOVA LÓGICA: Se der erro (ex: limite atingido), avisa o usuário
+    if (!response.ok) {
+      const erro = await response.json()
+      alert(erro.error || "Erro desconhecido") // Mostra a mensagem que veio do Back-End
+      setCarregando(false)
+      return
+    }
 
     setNome('')
     setTemp('')
