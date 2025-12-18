@@ -16,7 +16,7 @@ function App() {
   const [temp, setTemp] = useState('')
 
   async function carregarMaquinas() {
-    const response = await fetch('http://localhost:3333/maquinas')
+    const response = await fetch('https://vibelink-api.onrender.com/maquinas')
     const data = await response.json()
     setMaquinas(data)
   }
@@ -24,7 +24,7 @@ function App() {
   useEffect(() => { carregarMaquinas() }, [])
 
   async function ligarDesligar(id: number) {
-    await fetch(`http://localhost:3333/maquinas/${id}/toggle`, { method: 'POST' })
+    await fetch(`https://vibelink-api.onrender.com/maquinas/${id}/toggle`, { method: 'POST' })
     carregarMaquinas()
   }
 
@@ -34,7 +34,7 @@ function App() {
 
     if (!nome || !temp) return alert("Preencha todos os campos!")
 
-    await fetch('http://localhost:3333/maquinas', {
+    await fetch('https://vibelink-api.onrender.com/maquinas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }, // Avisa que estamos mandando JSON
       body: JSON.stringify({
@@ -108,7 +108,7 @@ function App() {
     // Pergunta de segurança (ninguém quer deletar sem querer)
     if (!confirm("Tem certeza que quer remover esta máquina?")) return
 
-    await fetch(`http://localhost:3333/maquinas/${id}`, {
+    await fetch(`https://vibelink-api.onrender.com/maquinas/${id}`, {
       method: 'DELETE'
     })
 
